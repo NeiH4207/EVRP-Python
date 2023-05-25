@@ -4,12 +4,12 @@ from random import shuffle
 import numpy as np
 from matplotlib import pyplot as plt
 import logging
-# from rich.logging import RichHandler
+from rich.logging import RichHandler
 
-# FORMAT = "%(message)s"
-# logging.basicConfig(
-#     level="NOTSET", format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
-# )
+FORMAT = "%(message)s"
+logging.basicConfig(
+    level=logging.INFO, format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+)
 log = logging.getLogger("rich")
 
 class Node():
@@ -252,8 +252,6 @@ class EVRP():
         
         # Set title and labels
         ax.set_title("Problem {}".format(self.problem_name))
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
         plt.show()
         
         
@@ -272,8 +270,6 @@ class EVRP():
         ax.legend()
         # Set title and labels
         ax.set_title("Problem {}".format(self.problem_name))
-        ax.set_xlabel("x")
-        ax.set_ylabel("y")
         
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = OrderedDict(zip(labels, handles))
@@ -287,8 +283,8 @@ class EVRP():
         plt.show()
 
 if __name__ == "__main__":
-    # evrp = EVRP('E-n37-k4-s4', dataset_path='./EVRP/benchmark-2022/')
-    evrp = EVRP('E-n22-k4', dataset_path='./EVRP/benchmark-2019/')
+    evrp = EVRP('X-n1006-k43-s5', dataset_path='./EVRP/benchmark-2022/')
+    # evrp = EVRP('E-n22-k4', dataset_path='./EVRP/benchmark-2019/')
     solution = evrp.get_random_solution()
     print(evrp.is_valid_solution(solution))
     evrp.plot_solution(solution)
