@@ -15,7 +15,7 @@ setup (
     author = 'Vu Quoc Hien',
     author_email = 'hienvq.2000@gmail.com',
     url = 'https://github.com/NeiH4207/VRP-Project',
-    packages=[],
+    packages=['EVRP'],
     keywords='',
     install_requires=[
     ],

@@ -5,59 +5,13 @@ import numpy as np
 from matplotlib import pyplot as plt
 import logging
 from rich.logging import RichHandler
+from EVRP.node import Node
+from EVRP.solution import Solution
 
-FORMAT = "%(message)s"
 logging.basicConfig(
-    level=logging.INFO, format=FORMAT, datefmt="[%X]", handlers=[RichHandler()]
+    level=logging.INFO, handlers=[RichHandler()]
 )
 log = logging.getLogger("rich")
-
-class Node():
-    def __init__(self, x, y):
-        self.x = x
-        self.y = y
-        self.type = None
-        self.demand = 0
-        
-    def get_type(self):
-        return self.type
-    
-    def set_type(self, type):
-        if type not in ['C', 'S', 'D']:
-            raise ValueError(f"Invalid type: {type}, must be 'C', 'S', or 'D'.")
-        self.type = type
-    
-    def get_demand(self):
-        return self.demand
-    
-    def set_demand(self, demand):
-        self.demand = demand
-    
-    def distance(self, P):
-        return np.sqrt((self.x - P.x)**2 + (self.y - P.y)**2)
-    
-    def is_customer(self):
-        return self.type == 'C'
-    
-    def is_station(self):
-        return self.type == 'S'
-    
-    def is_depot(self):
-        return self.type == 'D'
-    
-class Solution():
-    def __init__(self):
-        super().__init__()
-        self.tours = []
-        
-    def add_node(self, id):
-        self.tours.append(id)
-    
-    def set(self, solution):
-        self.tours = solution
-        
-    def get(self, id):
-        return self.tours[id]
 
 class EVRP():
     
@@ -146,8 +100,9 @@ class EVRP():
                 start_line = 12
                 end_line = 12 + self.num_dimensions
                 for i in range(start_line, end_line):
-                    x, y = lines[i].split()[-2:]
-                    self.nodes.append(Node(float(x), float(y)))
+                    id, x, y = lines[i].split()
+                    id = int(id) - 1
+                    self.nodes.append(Node(int(id), float(x), float(y)))
                     
                 start_line = end_line + 1
                 end_line = start_line + self.num_customers
@@ -174,32 +129,40 @@ class EVRP():
                 self.nodes[self.depot_id].set_type('D')
                 self.depot = self.nodes[self.depot_id]
             else:
-                raise ValueError(f"Invalid edge weight type: {edge_weight_type}")
-                
-    def is_valid_solution(self, solution: Solution):
+                raise ValueError(f"Invalid benchmark, edge weight type: {edge_weight_type} not supported.")
+           
+    def check_valid_solution(self, solution):
         energy_temp = self.energy_capacity
         capacity_temp = self.capacity
         
-        if solution.tours[0] != 0 or solution.tours[-1] != 0:
+        """ Vehicle did not start or end at a depot. """
+        if not solution.tours[0].is_depot() or solution.tours[-1].is_depot():
             return False
-        
+        flatten_tours = solution.to_array()
         # Check all customer occurrence only 1 time
-        counts = np.unique(solution.tours, return_counts=True)
+        counts = np.unique(flatten_tours, return_counts=True)
         for node_id in range(len(counts[0])):
+            """ Vehicle visited customer `node_id` more than once. """
             if counts[1][node_id] != 1 and self.nodes[node_id].is_customer():
                 return False
+            
+        """This solution using more than number of available vehicles. """
+        if counts[1][self.depot_id] - 1 > self.num_vehicles:
+            return False
         
-        for i in range(len(solution.tours)-1):
-            first_id = solution.tours[i]
+        for i in range(len(flatten_tours)-1):
+            first_id = flatten_tours[i]
             first_node = self.nodes[first_id]
-            second_id = solution.tours[i+1]
+            second_id = flatten_tours[i + 1]
             second_node = self.nodes[second_id]
             
             capacity_temp -= self.get_customer_demand(second_node)
             energy_temp -= self.get_energy_consumption(first_node, second_node)
             
+            """ Vehicle exceeds capacity when visiting second_id. """
             if capacity_temp < 0.0:
                 return False
+            """ Vehicle exceeds energy when visiting second_id. """
             if energy_temp < 0.0:
                 return False
             
@@ -210,39 +173,70 @@ class EVRP():
             if second_node.is_station():
                 energy_temp = self.energy_capacity
                 
-        return True
+        return True 
     
-    def get_random_solution(self):
-        solution = Solution()
-        temp_solution = np.arange(1, evrp.get_num_customers() + 1)
-        shuffle(temp_solution)
+    def caculate_tour_length(self):
+        return 0
+            
         
+    def get_random_solution(self):
+        """
+        Return a random solution for the EVRP problem instance.
+
+        The solution consists of a list of customer and charging station IDs that must be visited in a certain order.
+        The solution starts and ends at the depot (ID).
+
+        Returns:
+            solution (Solution): a randomly generated solution for the EVRP problem instance
+        """
+        # Create an empty solution object
+        solution = Solution()
+
+        # Generate a list of all customer IDs
+        temp_solution = np.arange(1, evrp.get_num_customers() + 1)
+
+        # Shuffle the list of customer IDs to randomize the solution
+        shuffle(temp_solution)
+
+        # Insert random charging stations into the list of customer IDs
         num_insert_station = int(np.sqrt(evrp.get_num_customers())) * 2
         for _ in range(int(num_insert_station)):
             idx = np.random.randint(0, len(temp_solution))
             rd_station = np.random.choice(evrp.get_station_id_list(), 1)[0]
             temp_solution = np.insert(temp_solution, idx, rd_station)
-            
-        temp_solution = np.insert(temp_solution, 0, 0)
-        temp_solution = np.insert(temp_solution, len(temp_solution), 0)
-        num_insert_depot = int(np.sqrt(evrp.get_num_customers())) * 2
+
+        # Insert the depot (ID) at the beginning and end of the solution
+        temp_solution = np.insert(temp_solution, 0, self.depot_id)
+        temp_solution = np.insert(temp_solution, len(temp_solution), self.depot_id)
+
+        # Insert random depots into the solution
+        num_insert_depot = self.num_vehicles - 1
         for _ in range(int(num_insert_depot)):
             idx = np.random.randint(0, len(temp_solution))
-            temp_solution = np.insert(temp_solution, idx, 0)
-        solution.set(temp_solution)
+            temp_solution = np.insert(temp_solution, idx, self.depot_id)
+
+        # Set the final solution and return it
+        for node_id in temp_solution:
+            solution.append(self.nodes[node_id])
         return solution
         
     
     def plot(self):
-        fig, ax = plt.subplots()
+        """
+        Plots the nodes of the problem and shows the plot.
+        No parameters.
+        No return types.
+        """
+        
+        _, ax = plt.subplots()
         
         for node in self.nodes:
             if node.is_customer():
-                ax.scatter(node.x, node.y, c='green', marker='o', s=100, alpha=0.5, label="Customer")
+                ax.scatter(node.x, node.y, c='green', marker='o', s=30, alpha=0.5, label="Customer")
             elif node.is_depot():
-                ax.scatter(node.x, node.y, c='red', marker='s', s=100, alpha=0.5, label="Depot")
+                ax.scatter(node.x, node.y, c='red', marker='s', s=30, alpha=0.5, label="Depot")
             elif node.is_station():
-                ax.scatter(node.x, node.y, c='blue', marker='^', s=100, alpha=0.5, label="Station")
+                ax.scatter(node.x, node.y, c='blue', marker='^', s=30, alpha=0.5, label="Station")
             else:
                 raise ValueError("Invalid node type")
         
@@ -256,24 +250,35 @@ class EVRP():
         
         
     def plot_solution(self, solution):
+        """
+        Plot the solution of the vehicle routing problem on a scatter plot.
+        
+        :param solution: A `Solution` object containing the solution of the vehicle routing problem.
+        
+        :return: None.
+        """
+        
         fig, ax = plt.subplots()
         
         for node in self.nodes:
             if node.is_customer():
-                ax.scatter(node.x, node.y, c='green', marker='o', s=100, alpha=0.5, label="Customer")
+                ax.scatter(node.x, node.y, c='green', marker='o', s=30, alpha=0.5, label="Customer")
             elif node.is_depot():
-                ax.scatter(node.x, node.y, c='red', marker='s', s=100, alpha=0.5, label="Depot")
+                ax.scatter(node.x, node.y, c='red', marker='s', s=30, alpha=0.5, label="Depot")
             elif node.is_station():
-                ax.scatter(node.x, node.y, c='blue', marker='^', s=100, alpha=0.5, label="Station")
+                ax.scatter(node.x, node.y, c='blue', marker='^', s=30, alpha=0.5, label="Station")
             else:
                 raise ValueError("Invalid node type")
-        ax.legend()
+            
         # Set title and labels
         ax.set_title("Problem {}".format(self.problem_name))
         
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = OrderedDict(zip(labels, handles))
-        plt.legend(by_label.values(), by_label.keys(), loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.legend(by_label.values(), by_label.keys(), 
+                   loc='upper right', 
+                   prop={'size': 6})
+        
         
         for i in range(len(solution.tours) - 1):
             first_node = self.nodes[solution.tours[i]]
@@ -283,11 +288,12 @@ class EVRP():
         plt.show()
 
 if __name__ == "__main__":
-    evrp = EVRP('X-n1006-k43-s5', dataset_path='./EVRP/benchmark-2022/')
-    # evrp = EVRP('E-n22-k4', dataset_path='./EVRP/benchmark-2019/')
+    # evrp = EVRP('X-n1006-k43-s5', dataset_path='./EVRP/benchmark-2022/')
+    evrp = EVRP('E-n22-k4', dataset_path='./EVRP/benchmark-2019/')
     solution = evrp.get_random_solution()
-    print(evrp.is_valid_solution(solution))
-    evrp.plot_solution(solution)
+    logging.info("`Random solution is {}".format("valid" if evrp.check_valid_solution(solution) else "invalid"))
+    solution.print()
+    # evrp.plot_solution(solution)
         
     
     
