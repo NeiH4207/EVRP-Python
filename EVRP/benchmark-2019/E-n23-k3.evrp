@@ -3,7 +3,7 @@ COMMENT: Modificatification of E-n23-k3 instance. Modified by Mavrovouniotis Men
 TYPE: EVRP 
 OPTIMAL_VALUE: 573.130948 
 VEHICLES: 3 
-DIMENSION: 31 
+DIMENSION: 32 
 STATIONS: 9 
 CAPACITY: 4500 
 ENERGY_CAPACITY: 190 
