@@ -7,9 +7,15 @@ class Node():
         self.y = y
         self.type = None
         self.demand = 0
-        
+    
+    def __str__(self):
+        return str(self.id)    
+    
     def get_type(self):
         return self.type
+    
+    def get_id(self):
+        return self.id
     
     def set_type(self, type):
         if type not in ['C', 'S', 'D']:
@@ -28,7 +34,7 @@ class Node():
     def is_customer(self):
         return self.type == 'C'
     
-    def is_station(self):
+    def is_charging_station(self):
         return self.type == 'S'
     
     def is_depot(self):

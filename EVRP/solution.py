@@ -26,19 +26,23 @@ class Solution():
         if not self.tours[0].is_depot() or not self.tours[-1].is_depot():
             return None
         
-        depot_id = self.tours[0].id
         vehicle_tours = []
-        tour = [depot_id]
+        tour = [self.tours[0]]
         
         for node in self.tours[1:]:
             if node.is_depot():
-                tour.append(depot_id)
+                tour.append(self.tours[0])
                 vehicle_tours.append(tour)
-                tour = [depot_id]
+                tour = [self.tours[0]]
             else:
-                tour.append(node.id)
+                tour.append(node)
         return vehicle_tours
     
+    def set_vehicle_tours(self, tours):
+        self.tours = [node for node in tours[0]]
+        for tour in tours[1:]:
+            self.tours.extend(tour[1:])
+        
     def calculate_tour_length(self):
         tour_length = 0
         for i in range(len(self.tours) - 1):
