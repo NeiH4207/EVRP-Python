@@ -15,9 +15,12 @@ setup (
     author = 'Vu Quoc Hien',
     author_email = 'hienvq.2000@gmail.com',
     url = 'https://github.com/NeiH4207/VRP-Project',
-    packages=[],
+    packages=['EVRP', 'examples'],
     keywords='',
     install_requires=[
+        'matplotlib==3.7.1',
+        'numpy==1.24.3',
+        'rich==13.3.5'
     ],
     python_requires='>=3.10',
     entry_points={
