@@ -7,11 +7,12 @@ logging.basicConfig(
 log = logging.getLogger("rich")
     
 from EVRP.problem import Problem
-from EVRP.GreedySearch import GreedySearch
+from EVRP.algorithms.HMAGS import HMAGS
 
 
 if __name__ == "__main__":
-    problem = Problem('E-n29-k4-s7', dataset_path='./EVRP/benchmark-2022/')
-    solution = problem.create_random_solution()
-    gs = GreedySearch(problem)
-    solution = gs.optimize(solution)
+    problem = Problem('E-n22-k4', dataset_path='./EVRP/benchmark-2019/')
+    solution = problem.random_solution()
+    solution.print()
+    hmags = HMAGS(problem, population_size=50, generations=100, crossover_prob=0.8, mutation_prob=0.2, elite_size=10)
+    hmags.run()

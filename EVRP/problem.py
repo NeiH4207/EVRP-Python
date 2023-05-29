@@ -39,6 +39,7 @@ class Problem():
         self.optimal_value = None
         self.energy_consumption = None
         self.nodes = []
+        self.node_dict = dict()
         self.customers = []
         self.customer_ids = []
         self.stations = []
@@ -94,6 +95,9 @@ class Problem():
     def get_all_customers(self):
         return self.customers
     
+    def get_node_from_id(self, id):
+        return self.node_dict[id]
+    
     def get_distance(self, from_node, to_node):
         return from_node.distance(to_node)
         
@@ -139,6 +143,7 @@ class Problem():
                     id, x, y = lines[i].split()
                     id = int(id) - 1
                     self.nodes.append(Node(int(id), float(x), float(y)))
+                    self.node_dict[id] = self.nodes[-1]
                     
                 start_line = end_line + 1
                 end_line = start_line + self.num_customers
@@ -164,6 +169,12 @@ class Problem():
                 self.depot_id = int(lines[end_line + 1].split()[-1]) - 1
                 self.nodes[self.depot_id].set_type('D')
                 self.depot = self.nodes[self.depot_id]
+                # remove depot from customers
+                self.customer_ids.remove(self.depot_id)
+                for i in range(len(self.customers)):
+                    if self.customers[i].is_depot():
+                        self.customers.pop(i)
+                        break
             else:
                 raise ValueError(f"Invalid benchmark, edge weight type: {edge_weight_type} not supported.")
     
@@ -221,7 +232,7 @@ class Problem():
                 
         return True 
         
-    def create_random_solution(self):
+    def random_solution(self):
         """
         Returns:
             solution (Solution): a randomly generated solution for the EVRP problem instance
@@ -298,9 +309,9 @@ class Problem():
                 prop={'size': 6})
 
         if solution is not None:
-            for i in range(len(solution.tours) - 1):
-                first_node = solution.tours[i]
-                second_node = solution.tours[i + 1]
+            for i in range(len(solution.complete_tours) - 1):
+                first_node = solution.complete_tours[i]
+                second_node = solution.complete_tours[i + 1]
                 plt.plot([first_node.x, second_node.x],
                         [first_node.y, second_node.y],
                         c='black', linewidth=0.5, linestyle='--')
@@ -313,7 +324,7 @@ class Problem():
 if __name__ == "__main__":
     # evrp = EVRP('X-n1006-k43-s5', dataset_path='./EVRP/benchmark-2022/')
     evrp = Problem('E-n22-k4', dataset_path='./EVRP/benchmark-2019/')
-    solution = evrp.create_random_solution()
+    solution = evrp.random_solution()
     logging.info("`Random solution is {}".format("valid" if evrp.check_valid_solution(solution) else "invalid"))
     solution.print()
     # evrp.plot(solution)

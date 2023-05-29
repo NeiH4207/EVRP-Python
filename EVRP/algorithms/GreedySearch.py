@@ -182,6 +182,7 @@ class GreedySearch():
         remaining_energy = dict()
         required_min_energy = dict()
         complete_tour = []
+        skip_node = dict()
         
         depotID = self.problem.get_depot_id()
         remaining_energy[depotID] = self.problem.get_battery_capacity()
@@ -220,7 +221,9 @@ class GreedySearch():
                     complete_tour.pop()
                 if i == 0:
                     return tour
-                
+                if from_node.id not in skip_node:
+                    return tour
+                skip_node[from_node.id] = True
                 to_node = tour[i + 1]
                 best_station = self.nearest_station(from_node, to_node, remaining_energy[from_node.get_id()])
                 if best_station == -1:
