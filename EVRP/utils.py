@@ -1,7 +1,8 @@
 from loguru import logger
 import sys, os
 logger.add(sys.stdout, colorize=True, format="<green>{time}</green> <level>{message}</level>", backtrace=False, diagnose=False)
-os.remove(".log")
+if os.path.exists(".log"):
+    os.remove(".log")
 logger.add(".log")
 
 def get_problem_list(dataset_path):
