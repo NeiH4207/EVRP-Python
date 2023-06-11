@@ -11,7 +11,7 @@ def argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset-path', type=str, default='./EVRP/benchmark-2019/')
     parser.add_argument('--result-path', type=str, default='./results/GreedySearch/')
-    parser.add_argument('--algorithm', type=str, default='GreedySearch')
+    parser.add_argument('--algorithm', type=str, default='HMAGS')
     parser.add_argument('--nruns', type=int, default=10)
     args = parser.parse_args()
     return args
@@ -19,9 +19,17 @@ def argparser():
 if __name__ == "__main__":
     args = argparser()
     problem_list = get_problem_list(args.dataset_path)
+    
+    if args.algorithm == 'GreedySearch':
+        algorithm = GreedySearch()
+    elif args.algorithm == 'HMAGS':
+        algorithm = HMAGS(population_size=200, generations=100, crossover_prob=0.8, mutation_prob=0.2, elite_size=10)
+    else:
+        raise ValueError(f'Invalid algorithm {args.algorithm}')
+
     for problem_name in problem_list:
         problem = Problem(problem_name, dataset_path=args.dataset_path)
-        gs = GreedySearch(problem)
+        algorithm.set_problem(problem)
         best = None
         results = []
         
@@ -31,7 +39,7 @@ if __name__ == "__main__":
 
         with open(os.path.join(stats_path, problem_name + '.txt'), 'w') as f:
             for i in range(args.nruns):
-                solution = gs.run()
+                solution = algorithm.run()
                 if problem.check_valid_solution(solution):
                     if best is None or best.get_tour_length() > solution.get_tour_length():
                         best = solution
@@ -48,5 +56,3 @@ if __name__ == "__main__":
         figure_result_path = os.path.join(figure_result_path, 'solution.png')
         
         problem.plot(best, figure_result_path)
-    # hmags = HMAGS(problem, population_size=50, generations=100, crossover_prob=0.8, mutation_prob=0.2, elite_size=10)
-    # hmags.run()

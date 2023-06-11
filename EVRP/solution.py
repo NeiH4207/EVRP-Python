@@ -3,7 +3,7 @@ import numpy as np
 from EVRP.utils import logger
 
 class Solution():
-    def __init__(self):
+    def __init__(self, tours=None):
         """
         The solution contains a list of tours. Each vehicle start and end at the depot
         See full description in the documentation https://mavrovouniotis.github.io/EVRPcompetition2020/TR-EVRP-Competition.pdf
@@ -12,8 +12,13 @@ class Solution():
         In this problem, the depot can be visited multiple times for each vehicle. (First vehicle tour: 0 -> 1 -> 2 -> 3 -> 4)
         The depot considered as the charging station.
         """
-        self.tours = []
         self.tour_index = {}
+        self.tour_length = np.inf
+        if tours:
+            self.tours = tours
+            self.set_tour_index()
+        else:
+            self.tours = []
         
     def add_tour(self, tour):
         self.tours.append(tour)
@@ -30,8 +35,10 @@ class Solution():
                         return 0
         return 1
     def __repr__(self) -> str:
-        presentation = "Tour length: {}\n".format(self.tour_length)
-
+        if self.tour_length:
+            presentation = "Tour length: {}\n".format(self.tour_length)
+        else:
+            presentation = ""
         for i, tour in enumerate(self.tours):
             presentation += 'Tour {}: '.format(i) + ' -> '.join(['0'] + [str(node.id) for node in tour] + ['0']) + '\n'
             

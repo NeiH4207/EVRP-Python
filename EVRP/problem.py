@@ -288,7 +288,11 @@ class Problem():
             tour = [self.get_depot()] + tour + [self.get_depot()]
             for i in range(len(tour) - 1):
                 tour_length += tour[i].distance(tour[i + 1])
-        return tour_length
+        
+        if self.check_valid_solution(solution):
+            return tour_length
+        else:
+            return tour_length * 2
     
     def plot(self, solution=None, path=None):
         """

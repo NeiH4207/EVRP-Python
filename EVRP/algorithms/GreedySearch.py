@@ -12,9 +12,12 @@ class GreedySearch():
     Algorithm for insert energy stations into all tours for each vehicle.
     
     """
-    def __init__(self, problem: Problem) -> None:
+    def __init__(self) -> None:
+        pass
+
+    def set_problem(self, problem: Problem):
         self.problem = problem
-        self.nearest_matrix_distance = []
+        self.nearest_matrix_distance = {}
         self.calculate_nearest_matrix_distance()
 
     def run(self):
@@ -77,6 +80,8 @@ class GreedySearch():
 
         solution.set_tour_index()
 
+        solution.set_tour_length(self.problem.calculate_tour_length(solution))
+
         return solution
     
     def optimize(self, solution: Solution, verbose=False):
@@ -137,12 +142,15 @@ class GreedySearch():
                 vehicle_tours[i].extend(sub_tour)
                 if j < len(sub_tours) - 1:
                     vehicle_tours[i].append(self.problem.get_depot())
+
         solution.set_vehicle_tours(vehicle_tours)
 
         if verbose:
             print(solution)
             self.problem.plot(solution, './EVRP/figures/step_4_greedy_optimize_station_solution.png')
-
+        
+        solution.set_tour_length(self.problem.calculate_tour_length(solution))
+        
         return solution
     
     
@@ -227,7 +235,7 @@ class GreedySearch():
                 required_energy[tour[i].get_id()] = previous_required_energy + self.problem.get_energy_consumption(tour[i - 1], tour[i])
                 if required_energy[tour[i].get_id()] > self.problem.get_battery_capacity():
                     # skip invalid solution
-                    return tour
+                    return tour[1:-1]
         
         tour = list(reversed(tour))
         energy = self.problem.get_battery_capacity()
