@@ -20,3 +20,7 @@ conda create -n vrp-project python=3.11
 ``` sh
 pip install .
 ```
+3. Run test Greedy Search
+``` sh
+python examples/main.py  --dataset-path EVRP/benchmark-2019 -a GreedySearch --result-path ./results/EVRP/GreedySearch -r 10
+```
