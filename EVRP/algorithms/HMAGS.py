@@ -42,6 +42,14 @@ class HMAGS():
         self.gs.set_problem(problem)
         self.population = self._initial_population()
 
+    def free(self):
+        self.history = {
+            'mean_fit': [],
+            'min_fit': []
+        }
+        self.ranks = []
+        self.population = self._initial_population()
+
     def selection(self, population: List[Solution], num: int) -> List[Solution]:
         new_pop = []
         self.compute_rank(population)
@@ -50,17 +58,12 @@ class HMAGS():
             new_pop.append(indv)
         return new_pop
 
-    def run(self) -> Solution:
+    def run(self, verbose=False) -> Solution:
         for i in range(self.generations):
             new_population = []
             self.compute_rank(self.population)
-            for j in range(self.population_size):
-                if random() < self.crossover_prob:
-                    p1 = self.choose_by_rank(self.population)
-                    p2 = self.choose_by_rank(self.population)
-                    child = self.distribute_crossover(p1, p2)
-                else:
-                    child = self.gs.create_solution()
+            while len(new_population) < self.population_size:
+                child = self.choose_by_rank(self.population)
                 if random() < self.mutation_prob:
                     if random() < 0.5:
                         child = self.hmm_mutate(child)
@@ -69,12 +72,13 @@ class HMAGS():
                 child = self.gs.optimize(child)
                 new_population.append(child)
             
-
-            self.population = self.selection(self.population + new_population, len(self.population))
+            elites = self._get_elite(self.population)
+            self.population = elites + self.selection(new_population, self.population_size)
             valids = [self.problem.check_valid_solution(indv) for indv in self.population]
             mean_fit = np.mean([indv.get_tour_length() for i, indv in enumerate(self.population) if valids[i]]) 
             min_fit = np.min([indv.get_tour_length() for i, indv in enumerate(self.population) if valids[i]])
-            
+            if verbose:
+                print(f"Generation: {i}, mean fit: {mean_fit}, min fit: {min_fit}")
             self.history['mean_fit'].append(mean_fit)
             self.history['min_fit'].append(min_fit)
             self.plot_history('./EVRP/figures/history.png')
@@ -112,14 +116,20 @@ class HMAGS():
             have[node.get_id()] = 1
             
         for node in parent_2_tours[id2]:
-            if node.get_id() not in have or have[node.get_id()] == 0:
-                alens.add(node.get_id())
-                have[node.get_id()] = 1
+            alens.add(node.get_id())
+            have[node.get_id()] = 1
         
-        alens = list(alens)
-        shuffle(alens)
+        alen_list = list(alens)
+
+        # drop random
+        for idx in range(len(alen_list)):
+            if random() > self.crossover_prob:
+                alens.remove(alen_list[idx])
+                have[alen_list[idx]] = 0
 
         index = 0
+        alens = list(alens)
+        shuffle(alens)
 
         for idx_tour in range(len(parent_1_tours)):
             for idx in range(len(parent_1_tours[idx_tour])):
@@ -128,20 +138,19 @@ class HMAGS():
                     index += 1
             child_1.add_tour(parent_1_tours[idx_tour])
 
+        index = 0
+        shuffle(alens)
         for idx_tour in range(len(parent_2_tours)):
             for idx in range(len(parent_2_tours[idx_tour])):
                 if have[parent_2_tours[idx_tour][idx].get_id()]:
-                    index -= 1
                     parent_2_tours[idx_tour][idx] = self.problem.get_node_from_id(alens[index])
+                    index += 1
             child_2.add_tour(parent_2_tours[idx_tour])
 
+        child_1.set_tour_index()
+        child_2.set_tour_index()
         
-        if random() < 0.5:
-            child_1.set_tour_index()
-            return child_1
-        else:
-            child_2.set_tour_index()
-            return child_2
+        return child_1, child_2
 
     def hmm_mutate(self, solution: Solution) -> Solution:
         solution.set_tour_index()
@@ -162,7 +171,7 @@ class HMAGS():
         for customer_id in self.gs.nearest_matrix_distance[rd_customer.get_id()]:
             if solution.tour_index[customer_id] != tour_idx:
                 mm_customer_list.append(self.problem.get_node_from_id(customer_id))
-                if len(mm_customer_list) > 1:
+                if len(mm_customer_list) > 3:
                     break
 
         mm_customer = choice(mm_customer_list)
@@ -189,6 +198,10 @@ class HMAGS():
         
         tours = solution.get_basic_tours()
         rd_tour_idx = choice(range(len(tours)))
+
+        if len(tours[rd_tour_idx]) == 0:
+            return solution
+        
         rd_customer_idx = choice(range(len(tours[rd_tour_idx])))
         rd_customer = tours[rd_tour_idx][rd_customer_idx]
 
@@ -197,7 +210,7 @@ class HMAGS():
         for customer_id in self.gs.nearest_matrix_distance[rd_customer.get_id()]:
             if solution.tour_index[customer_id] != tour_idx:
                 mm_customer_list.append(self.problem.get_node_from_id(customer_id))
-                if len(mm_customer_list) > 1:
+                if len(mm_customer_list) > 3:
                     break
 
         mm_customer = choice(mm_customer_list)
