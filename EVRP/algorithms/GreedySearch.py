@@ -20,6 +20,9 @@ class GreedySearch():
         self.nearest_matrix_distance = {}
         self.calculate_nearest_matrix_distance()
 
+    def free(self):
+        pass
+
     def run(self):
         solution = self.create_solution()
         solution = self.optimize(solution)
