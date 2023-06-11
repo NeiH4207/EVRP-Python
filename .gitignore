@@ -8,7 +8,7 @@ __pycache__/
 
 # Metadata files
 .vscode/
-
+results/
 # Distribution / packaging
 .Python
 build/

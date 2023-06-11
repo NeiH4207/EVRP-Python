@@ -35,7 +35,7 @@ class Node():
         return self.type == 'C'
     
     def is_charging_station(self):
-        return self.type == 'S'
+        return self.type == 'S' or self.type == 'D'
     
     def is_depot(self):
         return self.type == 'D'

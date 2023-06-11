@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from copy import deepcopy
 import os
 from random import shuffle
 import numpy as np
@@ -7,12 +8,7 @@ from matplotlib import pyplot as plt
 from EVRP.node import Node
 from EVRP.solution import Solution
 
-from rich.logging import RichHandler
-import logging
-logging.basicConfig(
-    level=logging.INFO, handlers=[RichHandler()]
-)
-log = logging.getLogger("rich")
+from EVRP.utils import logger
 
 class Problem():
     
@@ -78,13 +74,13 @@ class Problem():
         return self.depot_id
     
     def get_customer_ids(self):
-        return self.customer_ids
+        return deepcopy(self.customer_ids)
     
     def get_station_ids(self):
-        return self.station_ids
+        return deepcopy(self.station_ids)
     
     def get_all_stations(self):
-        return self.stations
+        return deepcopy(self.stations)
     
     def get_battery_capacity(self):
         return self.energy_capacity
@@ -120,11 +116,11 @@ class Problem():
             lines = f.readlines()
             
             """ Read metadata """
-            logging.info(f"Read problem file: {problem_file_path}")
-            logging.info("{}".format(lines[0]))
-            logging.info("{}".format(lines[1]))
-            logging.info("{}".format(lines[2]))
-            logging.info("{}".format(lines[3]))
+            logger.info(f"Read problem file: {problem_file_path}")
+            logger.info("{}".format(lines[0]))
+            logger.info("{}".format(lines[1]))
+            logger.info("{}".format(lines[2]))
+            logger.info("{}".format(lines[3]))
             self.num_vehicles = int(lines[4].split()[-1])
             self.num_dimensions = int(lines[5].split()[-1])
             self.num_stations = int(lines[6].split()[-1])
@@ -132,7 +128,7 @@ class Problem():
             self.capacity = float(lines[7].split()[-1])
             self.energy_capacity = float(lines[8].split()[-1])
             self.energy_consumption = float(lines[9].split()[-1])
-            logging.info("{}".format(lines[10]))
+            logger.info("{}".format(lines[10]))
             edge_weight_type = lines[10].split()[-1]
             
             """ Read NODES """
@@ -175,10 +171,12 @@ class Problem():
                     if self.customers[i].is_depot():
                         self.customers.pop(i)
                         break
+
+                self.num_customers -= 1 # skip depot from customers
             else:
                 raise ValueError(f"Invalid benchmark, edge weight type: {edge_weight_type} not supported.")
     
-    def check_valid_solution(self, solution):
+    def check_valid_solution(self, solution, verbose=False):
         """
         Check if a given solution is a valid solution for the Vehicle Routing Problem (VRP).
         
@@ -188,48 +186,58 @@ class Problem():
         Returns:
             A boolean value indicating whether the solution is valid or not.
         """
-        energy_temp = self.energy_capacity
-        capacity_temp = self.capacity
-        
-        """ Vehicle did not start or end at a depot. """
-        if not solution.tours[0].is_depot() or solution.tours[-1].is_depot():
-            return False
-        flatten_tours = solution.to_array()
-        # Check all customer occurrence only 1 time
-        counts = np.unique(flatten_tours, return_counts=True)
-        for node_id in range(len(counts[0])):
-            """ Vehicle visited customer `node_id` more than once. """
-            if counts[1][node_id] != 1 and self.nodes[node_id].is_customer():
-                return False
-            
-        """This solution using more than number of available vehicles. """
-        num_vehicle_used = counts[1][self.depot_id] - 1
-        if  num_vehicle_used> self.num_vehicles:
+        is_valid = solution.set_tour_index()
+        if not is_valid:
+            if verbose:
+                logger.warning("The vehicle has visited a customer more than once.")
             return False
         
-        for i in range(len(flatten_tours)-1):
-            first_id = flatten_tours[i]
-            first_node = self.nodes[first_id]
-            second_id = flatten_tours[i + 1]
-            second_node = self.nodes[second_id]
-            
-            capacity_temp -= self.get_customer_demand(second_node)
-            energy_temp -= self.get_energy_consumption(first_node, second_node)
-            
-            """ Vehicle exceeds capacity when visiting second_id. """
-            if capacity_temp < 0.0:
-                return False
-            """ Vehicle exceeds energy when visiting second_id. """
-            if energy_temp < 0.0:
-                return False
-            
-            if second_node.is_depot():
-                capacity_temp = self.capacity
-                energy_temp = self.energy_capacity
+        tours = solution.get_tours()
+
+        if len(tours) > self.num_vehicles:
+            if verbose:
+                logger.warning("This solution using more than number of available vehicles.")
+            return False
+        
+        visited = {}
+
+        for tour in tours:
+            tour = [self.get_depot()] + tour + [self.get_depot()]
+            energy_temp = self.get_battery_capacity()
+            capacity_temp = self.get_capacity()
                 
-            if second_node.is_charging_station():
-                energy_temp = self.energy_capacity
+            
+            for i in range(len(tour) - 1):
+                first_node = tour[i]
+                second_node = tour[i + 1]
+
+                if first_node.is_customer():
+                    if first_node.get_id() in visited:
+                        if verbose:
+                            logger.warning("The vehicle has visited a customer more than once.")
+                        return False
+                    visited[first_node.get_id()] = 1
                 
+                capacity_temp -= self.get_customer_demand(second_node)
+                energy_temp -= self.get_energy_consumption(first_node, second_node)
+                
+                if capacity_temp < 0.0:
+                    if verbose:
+                        logger.warning("The vehicle exceeds capacity when visiting {}.".format(second_node.get_id()))
+                    return False
+                
+                if energy_temp < 0.0:
+                    if verbose:
+                        logger.warning("The vehicle exceeds energy when visiting {}.".format(second_node.get_id()))
+                    return False
+                
+                if second_node.is_depot():
+                    capacity_temp = self.get_capacity()
+                    energy_temp = self.get_battery_capacity()
+                    
+                if second_node.is_charging_station():
+                    energy_temp = self.get_battery_capacity()
+                    
         return True 
         
     def random_solution(self):
@@ -252,26 +260,35 @@ class Problem():
         solution = Solution()
 
         # Generate a list of all customer IDs
-        temp_solution = np.arange(1, self.get_num_customers())
+        temp_solution = self.get_customer_ids()
 
         # Shuffle the list of customer IDs to randomize the solution
         shuffle(temp_solution)
 
-        # Insert the depot (ID) at the beginning and end of the solution
-        temp_solution = np.insert(temp_solution, 0, self.depot_id)
-        temp_solution = np.insert(temp_solution, len(temp_solution), self.depot_id)
+        splited_tour_indexes = np.random.choice(len(temp_solution), self.num_vehicles - 1, replace=False)
+        
+        splited_tour_indexes = np.append(0, splited_tour_indexes)
 
-        # Insert random depots into the solution
-        num_insert_depot = self.num_vehicles - 1
-        for _ in range(int(num_insert_depot)):
-            idx = np.random.randint(0, len(temp_solution))
-            temp_solution = np.insert(temp_solution, idx, self.depot_id)
+        splited_tour_indexes = np.append(splited_tour_indexes, len(temp_solution))
 
-        # Set the final solution and return it
-        for node_id in temp_solution:
-            solution.append(self.nodes[node_id])
-            
+        splited_tour_indexes = np.sort(splited_tour_indexes)
+
+        for i in range(self.num_vehicles):
+            tour_ids = temp_solution[splited_tour_indexes[i]:splited_tour_indexes[i + 1]]
+            tour = [self.get_node_from_id(_id) for _id in tour_ids]
+            solution.add_tour(tour)
+
+        solution.set_tour_index()
+
         return solution
+    
+    def calculate_tour_length(self, solution: Solution):
+        tour_length = 0
+        for tour in solution.get_tours():
+            tour = [self.get_depot()] + tour + [self.get_depot()]
+            for i in range(len(tour) - 1):
+                tour_length += tour[i].distance(tour[i + 1])
+        return tour_length
     
     def plot(self, solution=None, path=None):
         """
@@ -309,11 +326,23 @@ class Problem():
                 prop={'size': 6})
 
         if solution is not None:
-            for i in range(len(solution.complete_tours) - 1):
-                first_node = solution.complete_tours[i]
-                second_node = solution.complete_tours[i + 1]
-                plt.plot([first_node.x, second_node.x],
-                        [first_node.y, second_node.y],
+            tours = solution.get_tours()
+            for tour in tours:
+                if len(tour) == 0:
+                    continue
+                plt.plot([self.get_depot().x, tour[0].x],
+                        [self.get_depot().y, tour[0].y],
+                        c='black', linewidth=0.5, linestyle='--')
+                
+                for i in range(len(tour) - 1):
+                    first_node = tour[i]
+                    second_node = tour[i + 1]
+                    plt.plot([first_node.x, second_node.x],
+                            [first_node.y, second_node.y],
+                            c='black', linewidth=0.5, linestyle='--')
+                    
+                plt.plot([tour[-1].x, self.get_depot().x],
+                        [tour[-1].y, self.get_depot().y],
                         c='black', linewidth=0.5, linestyle='--')
         if path is None:
             plt.show()
@@ -325,9 +354,9 @@ if __name__ == "__main__":
     # evrp = EVRP('X-n1006-k43-s5', dataset_path='./EVRP/benchmark-2022/')
     evrp = Problem('E-n22-k4', dataset_path='./EVRP/benchmark-2019/')
     solution = evrp.random_solution()
-    logging.info("`Random solution is {}".format("valid" if evrp.check_valid_solution(solution) else "invalid"))
-    solution.print()
-    # evrp.plot(solution)
+    logger.info("Random solution is {}".format("valid" if evrp.check_valid_solution(solution, verbose=True) else "invalid"))
+    print(solution)
+    evrp.plot(solution)
         
     
     

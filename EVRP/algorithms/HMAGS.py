@@ -3,6 +3,8 @@ import random
 from typing import List
 from random import shuffle, randint, uniform, random, choice
 
+import numpy as np
+
 from EVRP.solution import Solution
 from EVRP.problem import Problem
 from EVRP.algorithms.GreedySearch import GreedySearch
@@ -66,6 +68,34 @@ class HMAGS():
         plt.savefig(path)
         plt.close()
 
+    def create_solution(self):
+        """
+        """
+        # Create an empty solution object
+        solution = Solution()
+
+        # Generate a list of all customer IDs
+        temp_solution = np.arange(1, self.get_num_customers())
+
+        # Shuffle the list of customer IDs to randomize the solution
+        shuffle(temp_solution)
+
+        # Insert the depot (ID) at the beginning and end of the solution
+        temp_solution = np.insert(temp_solution, 0, self.depot_id)
+        temp_solution = np.insert(temp_solution, len(temp_solution), self.depot_id)
+
+        # Insert random depots into the solution
+        num_insert_depot = self.num_vehicles - 1
+        for _ in range(int(num_insert_depot)):
+            idx = np.random.randint(0, len(temp_solution))
+            temp_solution = np.insert(temp_solution, idx, self.depot_id)
+
+        # Set the final solution and return it
+        for node_id in temp_solution:
+            solution.append(self.nodes[node_id])
+            
+        return solution
+    
     def _initial_population(self) -> List[Solution]:
         return [self.problem.random_solution() for _ in range(self.population_size)]
 

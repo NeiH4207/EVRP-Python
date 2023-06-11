@@ -1,33 +1,57 @@
 from copy import deepcopy
 import numpy as np
+from EVRP.utils import logger
 
 class Solution():
     def __init__(self):
+        """
+        The solution contains a list of tours. Each vehicle start and end at the depot
+        See full description in the documentation https://mavrovouniotis.github.io/EVRPcompetition2020/TR-EVRP-Competition.pdf
+        Example a solution with two vehicles: 0 -> 1 -> 2 -> 3 -> 0 -> 4 -> 0 -> 5 -> 6 -> 0
+        tours includes [1, 2, 3, 4] and [5, 6]
+        In this problem, the depot can be visited multiple times for each vehicle. (First vehicle tour: 0 -> 1 -> 2 -> 3 -> 4)
+        The depot considered as the charging station.
+        """
         self.tours = []
-        self.complete_tours = []
-        self.tour_index = dict()
-        self.current_tour_idx = -1
+        self.tour_index = {}
         
-    def append(self, node):
-        self.tours.append(node)
-        if node.is_depot():
-            self.current_tour_idx += 1
-        if not node.is_depot():
-            self.tour_index[node.id] = self.current_tour_idx
+    def add_tour(self, tour):
+        self.tours.append(tour)
+
+    def set_tour_index(self):
+        self.tour_index = {}
+        for idx, tour in enumerate(self.tours):
+            for node in tour:
+                if node.is_customer():
+                    if node.id not in self.tour_index:
+                        self.tour_index[node.id] = idx
+                    else:
+                        logger.warning('Node {} already in tour {}'.format(node.id, idx))
+                        return 0
+        return 1
+    def __repr__(self) -> str:
+        presentation = "Tour length: {}\n".format(self.tour_length)
+
+        for i, tour in enumerate(self.tours):
+            presentation += 'Tour {}: '.format(i) + ' -> '.join(['0'] + [str(node.id) for node in tour] + ['0']) + '\n'
+            
+        return presentation
     
-    def set(self, solution):
-        self.tours = solution
-        self.set_tour_index()
-        
-    def get(self, id):
-        return self.tours[id]
+    def get_tours(self):
+        return deepcopy(self.tours)
     
-    def get(self, id):
-        return self.tours[id]
-    
+    def get_basic_tours(self):
+        tours = []
+        for tour in self.tours:
+            _tour = [node for node in tour if node.is_customer()]
+            tours.append(_tour)
+        return tours
+
     def get_tour_length(self):
-        self.calculate_tour_length()
         return self.tour_length
+    
+    def set_tour_length(self, tour_length):
+        self.tour_length = tour_length
     
     def to_array(self):
         return np.array([node.id for node in self.tours])
@@ -66,41 +90,7 @@ class Solution():
                 tour.append(node)
         return vehicle_tours
     
-    def set_vehicle_tours(self, tours, skip_depot=False, depot=None):
-        if skip_depot:
-            self.complete_tours = [[depot] + [node for node in tours[0]]]
-        else:
-            self.complete_tours = [node for node in tours[0]]
+    def set_vehicle_tours(self, tours):
+        self.tours = tours
+        self.set_tour_index()
             
-        for tour in tours[1:]:
-            if skip_depot:
-                self.complete_tours.extend([depot] + tour + [depot])
-            else:
-                self.complete_tours.extend(tour[1:])
-            
-    def set_tour_index(self):
-        current_idx = -1
-        for idx, node in enumerate(self.tours):
-            if node.is_depot():
-                current_idx += 1
-            self.tour_index[node.id] = current_idx
-        
-    def calculate_tour_length(self):
-        tour_length = 0
-        if len(self.complete_tours) == 0:
-            self.complete_tours = self.tours
-        for i in range(len(self.complete_tours) - 1):
-            tour_length += self.complete_tours[i].distance(self.complete_tours[i + 1])
-        self.tour_length = tour_length
-    
-    def print(self, max_visible_tours=15):
-        vehicle_tours = self.get_vehicle_tours()
-        print("-" * 40)
-        print("Tour length: " + str(self.get_tour_length()))
-        for i, tour in enumerate(vehicle_tours):
-            if len(tour) > max_visible_tours:
-                print('Tour {}: '.format(i) +' | '.join(map(str, tour[:max_visible_tours])) + ' | ...')
-            else:
-                print('Tour {}: '.format(i)+ ' | '.join(map(str, tour)))
-        print("-" * 40)
-        
