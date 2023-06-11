@@ -9,7 +9,7 @@ from EVRP.utils import logger, get_problem_list
 
 def argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset-path', type=str, default='./EVRP/benchmark-2019/')
+    parser.add_argument('-d', '--dataset-path', type=str, default='./EVRP/benchmark-2019/')
     parser.add_argument('--result-path', type=str, default='./results/GreedySearch/')
     parser.add_argument('--algorithm', type=str, default='HMAGS')
     parser.add_argument('--nruns', type=int, default=10)
