@@ -22,5 +22,5 @@ pip install .
 ```
 3. Run test Greedy Search
 ``` sh
-python examples/main.py  --dataset-path EVRP/benchmark-2019 -a GreedySearch --result-path ./results/EVRP/GreedySearch -r 10
+python examples/main.py  --dataset-path EVRP/benchmark-2019 -a HMAGS --result-path ./results/EVRP/HMAGS -r 10
 ```
