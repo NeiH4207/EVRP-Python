@@ -11,8 +11,8 @@ def argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dataset-path', type=str, default='./EVRP/benchmark-2019/')
     parser.add_argument('--result-path', type=str, default='./results/GreedySearch/')
-    parser.add_argument('--algorithm', type=str, default='HMAGS')
-    parser.add_argument('--nruns', type=int, default=10)
+    parser.add_argument('-a', '--algorithm', type=str, default='HMAGS')
+    parser.add_argument('-r', '--nruns', type=int, default=10)
     args = parser.parse_args()
     return args
 
