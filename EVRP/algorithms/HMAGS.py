@@ -65,10 +65,12 @@ class HMAGS():
             while len(new_population) < self.population_size:
                 child = self.choose_by_rank(self.population)
                 if random() < self.mutation_prob:
-                    if random() < 0.5:
-                        child = self.hmm_mutate(child)
+                    if random() < 1/3:
+                        child = self.hmm(child)
+                    elif random() < 2/3:
+                        child = self.hsm(child)
                     else:
-                        child = self.hsm_mutate(child)
+                        child = self.hsm2(child)
                 child = self.gs.optimize(child)
                 new_population.append(child)
             
@@ -152,7 +154,7 @@ class HMAGS():
         
         return child_1, child_2
 
-    def hmm_mutate(self, solution: Solution) -> Solution:
+    def hmm(self, solution: Solution) -> Solution:
         solution.set_tour_index()
         tours = solution.get_basic_tours()
 
@@ -189,7 +191,7 @@ class HMAGS():
         return Solution(tours)
 
 
-    def hsm_mutate(self, solution: Solution) -> Solution:
+    def hsm(self, solution: Solution) -> Solution:
         solution.set_tour_index()
         tours = solution.get_basic_tours()
 
@@ -224,6 +226,28 @@ class HMAGS():
         
         tours[tour_idx][rd_customer_idx], tours[mm_customer_tour_idx][mm_customer_idx] = \
             tours[mm_customer_tour_idx][mm_customer_idx], tours[tour_idx][rd_customer_idx]
+        
+        return Solution(tours)
+    
+    def hsm2(self, solution: Solution) -> Solution:
+        solution.set_tour_index()
+        tours = solution.get_basic_tours()
+
+        if len(tours) == 1:
+            return solution
+        
+        tours = solution.get_basic_tours()
+        rd_tour_idx = choice(range(len(tours)))
+
+        if len(tours[rd_tour_idx]) == 0:
+            return solution
+        
+        rd_customer_idx_1 = choice(range(len(tours[rd_tour_idx])))
+        rd_customer_idx_2 = choice(range(len(tours[rd_tour_idx])))
+
+        
+        tours[rd_tour_idx][rd_customer_idx_1], tours[rd_tour_idx][rd_customer_idx_2] = \
+            tours[rd_tour_idx][rd_customer_idx_2], tours[rd_tour_idx][rd_customer_idx_1]
         
         return Solution(tours)
     
