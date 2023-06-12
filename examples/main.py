@@ -23,8 +23,8 @@ if __name__ == "__main__":
     if args.algorithm == 'GreedySearch':
         algorithm = GreedySearch()
     elif args.algorithm == 'HMAGS':
-        algorithm = HMAGS(population_size=50, generations=150, 
-                          crossover_prob=0.8, mutation_prob=0.2, elite_size=5)
+        algorithm = HMAGS(population_size=200, generations=150, 
+                          crossover_prob=0.0, mutation_prob=1.0, elite_size=20)
     else:
         raise ValueError(f'Invalid algorithm {args.algorithm}')
 

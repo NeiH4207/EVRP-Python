@@ -94,8 +94,8 @@ class GreedySearch():
         
         vehicle_tours = solution.get_basic_tours()
 
-        for i, tour in enumerate(vehicle_tours):
-            vehicle_tours[i] = self.local_search_2opt(tour)
+        # for i, tour in enumerate(vehicle_tours):
+        #     vehicle_tours[i] = self.local_search_2opt(tour)
             
         if verbose:
             solution.set_vehicle_tours(vehicle_tours)
