@@ -1,6 +1,6 @@
 from copy import deepcopy
 import numpy as np
-from EVRP.src.utils import logger
+from src.utils import logger
 
 class Solution():
     def __init__(self, tours=None):

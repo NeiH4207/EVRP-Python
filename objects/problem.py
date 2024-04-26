@@ -5,10 +5,10 @@ from random import shuffle
 import numpy as np
 from matplotlib import pyplot as plt
 
-from EVRP.objects.node import Node
-from EVRP.objects.solution import Solution
+from objects.node import Node
+from objects.solution import Solution
 
-from EVRP.src.utils import get_problem_name, logger
+from src.utils import get_problem_name, logger
 
 class Problem():
     
