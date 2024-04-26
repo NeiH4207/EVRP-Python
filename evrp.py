@@ -2,23 +2,30 @@ import argparse
 import os
 
 import numpy as np
-from EVRP.algorithms.HMAGS import HMAGS
-from EVRP.objects.problem import Problem
-from EVRP.algorithms.GreedySearch import GreedySearch
-from EVRP.src.utils import get_problem_name, logger
+from algorithms.HMAGS import HMAGS
+from objects.problem import Problem
+from algorithms.GreedySearch import GreedySearch
+from src.utils import get_problem_name, logger
+import random
 
 def argparser():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-p', '--problem-path', type=str, default='./EVRP/benchmarks/evrp-2019/E-n22-k4.evrp')
+    parser.add_argument('-p', '--problem-path', type=str, default='./benchmarks/evrp-2019/E-n22-k4.evrp')
     parser.add_argument('-a', '--algorithm', type=str, default='HMAGS')
     parser.add_argument('-o', '--result-path', type=str, default='./results/HMAGS/')
     parser.add_argument('-n', '--nruns', type=int, default=10)
+    parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
     return args
 
+def set_random_seed(seed):
+    np.random.seed(seed)
+    random.seed(seed)
+    
+
 if __name__ == "__main__":
     args = argparser()
-
+    set_random_seed(args.seed)
     problem_name = get_problem_name(args.problem_path)
     problem = Problem(args.problem_path)
     
@@ -31,8 +38,8 @@ if __name__ == "__main__":
         }
         
     elif args.algorithm == 'HMAGS':
-        algorithm = HMAGS(population_size=50, generations=150, 
-                          crossover_prob=0.75, mutation_prob=0.5, elite_rate=0.1)
+        algorithm = HMAGS(population_size=100, generations=150, 
+                          crossover_prob=0.5, mutation_prob=0.75, elite_rate=0.2)
         
         kwargs = {
             'problem': problem,
