@@ -20,10 +20,10 @@ python evrp.py -p ./benchmarks/evrp-2019/E-n22-k4.evrp -a HMAGS -o ./results/HMA
 ```
 
 *** Example of solution in graph E-n23-k3.evrp using HMAGS algorithm
-![Solution](results/HMAGS/E-n22-k4/fitness_history.png)
+![Solution](examples/E-n22-k4.png)
 
 
-The algorithm archived top 3 in competition [CEC-12 (2019)](https://mavrovouniotis.github.io/EVRPcompetition2020/)
+The algorithm in C++ version [here](https://github.com/NeiH4207/EVRP) archived top 3 in competition [CEC-12 (2019)](https://mavrovouniotis.github.io/EVRPcompetition2020/)
 
 |     instances    | (Team1) VNS |           |           |        | (Team2) SA |           |           |        | (Team3) HMAGS |           |           |         |
 |:----------------:|:-----------:|:---------:|:---------:|:------:|:----------:|:---------:|:---------:|:------:|:-------------:|:---------:|:---------:|:-------:|
