@@ -30,8 +30,8 @@ class HMAGS():
         self.mutation_prob = mutation_prob
         self.elite_size = int(population_size * elite_rate)
         self.history = {
-            'mean_fit': [],
-            'best_fit': []
+            'Mean Pop Fitness': [],
+            'Best Pop Fitness': []
         }
         self.ranks = []
         self.population = []
@@ -44,8 +44,8 @@ class HMAGS():
 
     def free(self):
         self.history = {
-            'mean_fit': [],
-            'best_fit': []
+            'Mean Pop Fitness': [],
+            'Best Pop Fitness': []
         }
         self.ranks = []
         self.population = self._initial_population()
@@ -107,8 +107,8 @@ class HMAGS():
             if verbose:
                 print(f"Generation: {i}, mean fit: {mean_fit}, min fit: {best_fit}")
                 
-            self.history['mean_fit'].append(mean_fit)
-            self.history['best_fit'].append(best_fit)
+            self.history['Mean Pop Fitness'].append(mean_fit)
+            self.history['Best Pop Fitness'].append(best_fit)
             
             if plot_path is not None:
                 self.plot_history(plot_path)
@@ -120,6 +120,11 @@ class HMAGS():
     def plot_history(self, path):
         df = pd.DataFrame(self.history)
         df.plot()
+        plt.xlabel('Generation')
+        plt.ylabel('Fitness')
+        plt.title('Convergence trending ({})'.format(self.problem.get_name()))
+        plt.legend()
+        plt.grid()
         plt.savefig(path)
         plt.close()
 
