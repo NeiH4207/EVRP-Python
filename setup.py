@@ -6,6 +6,9 @@ import pathlib
 here = pathlib.Path(__file__).parent.resolve()
 long_description = (here / "README.md").read_text(encoding="utf-8")
 
+def get_requirements(path: str):
+    return [l.strip() for l in open(path)]
+
 setup (
     name = 'VRP Project',
     version = '0.1',
@@ -17,11 +20,7 @@ setup (
     url = 'https://github.com/NeiH4207/VRP-Project',
     packages=['EVRP', 'examples'],
     keywords='',
-    install_requires=[
-        'matplotlib==3.7.1',
-        'numpy==1.24.3',
-        'rich==13.3.5'
-    ],
+    install_requires=get_requirements("requirements.txt"),
     python_requires='>=3.10',
     entry_points={
         'console_scripts': [
