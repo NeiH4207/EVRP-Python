@@ -308,13 +308,13 @@ class Problem():
         for node in self.nodes:
             if node.is_customer():
                 ax.scatter(node.x, node.y, c='green', marker='o',
-                        s=30, alpha=0.5, label="Customer")
+                        s=30, alpha=0.5, label="Customer Node")
             elif node.is_depot():
                 ax.scatter(node.x, node.y, c='red', marker='s',
-                        s=30, alpha=0.5, label="Depot")
+                        s=30, alpha=0.5, label="Depot Node")
             elif node.is_charging_station():
                 ax.scatter(node.x, node.y, c='blue', marker='^',
-                        s=30, alpha=0.5, label="Station")
+                        s=30, alpha=0.5, label="Charging Station Node")
             else:
                 raise ValueError("Invalid node type")
 

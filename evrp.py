@@ -38,8 +38,8 @@ if __name__ == "__main__":
         }
         
     elif args.algorithm == 'HMAGS':
-        algorithm = HMAGS(population_size=100, generations=150, 
-                          crossover_prob=0.5, mutation_prob=0.75, elite_rate=0.2)
+        algorithm = HMAGS(population_size=100, generations=200, 
+                          crossover_prob=0.85, mutation_prob=0.75, elite_rate=0.2)
         
         kwargs = {
             'problem': problem,
