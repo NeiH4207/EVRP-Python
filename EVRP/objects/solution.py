@@ -1,6 +1,6 @@
 from copy import deepcopy
 import numpy as np
-from EVRP.utils import logger
+from EVRP.src.utils import logger
 
 class Solution():
     def __init__(self, tours=None):
@@ -34,13 +34,17 @@ class Solution():
                         logger.warning('Node {} already in tour {}'.format(node.id, idx))
                         return 0
         return 1
+    
+    def get_tour_index_by_node(self, node_id):
+        return self.tour_index[node_id]
+    
     def __repr__(self) -> str:
         if self.tour_length:
             presentation = "Tour length: {}\n".format(self.tour_length)
         else:
             presentation = ""
         for i, tour in enumerate(self.tours):
-            presentation += 'Tour {}: '.format(i) + ' -> '.join(['0'] + [str(node.id) for node in tour] + ['0']) + '\n'
+            presentation += 'Tour {}: '.format(i) + ' -> '.join([str(node.id) for node in tour]) + '\n'
             
         return presentation
     

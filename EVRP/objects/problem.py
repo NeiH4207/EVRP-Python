@@ -5,14 +5,14 @@ from random import shuffle
 import numpy as np
 from matplotlib import pyplot as plt
 
-from EVRP.node import Node
-from EVRP.solution import Solution
+from EVRP.objects.node import Node
+from EVRP.objects.solution import Solution
 
-from EVRP.utils import logger
+from EVRP.src.utils import get_problem_name, logger
 
 class Problem():
     
-    def __init__(self, problem_name: str, dataset_path='./EVRP/benchmark-2022/'):
+    def __init__(self, problem_path=None):
         """
         Initializes an instance of the class with the given parameters.
 
@@ -21,13 +21,12 @@ class Problem():
         :param dataset_path: A string representing the path of the dataset to be used (default is ./EVRP/benchmark/)
         :type dataset_path: str
         """
-        self.problem_name = problem_name
-        self.dataset_path = dataset_path
-        problem_path = os.path.join(self.dataset_path, problem_name + '.evrp')
+        self.problem_path = problem_path
+        self.problem_name = get_problem_name(problem_path)
         if not os.path.isfile(problem_path):
             raise ValueError(f"Problem file not found: {problem_path}. Please input a valid problem name.")
 
-        self.num_vehicles = None
+        self.max_num_vehicles = None
         self.energy_capacity = None
         self.capacity = None
         self.num_stations = None
@@ -61,8 +60,8 @@ class Problem():
     def get_num_dimensions(self):
         return self.num_dimensions
     
-    def get_num_vehicles(self):
-        return self.num_vehicles
+    def get_max_num_vehicles(self):
+        return self.max_num_vehicles
     
     def get_customer_demand(self, node):
         return node.get_demand()
@@ -121,7 +120,7 @@ class Problem():
             logger.info("{}".format(lines[1]))
             logger.info("{}".format(lines[2]))
             logger.info("{}".format(lines[3]))
-            self.num_vehicles = int(lines[4].split()[-1])
+            self.max_num_vehicles = int(lines[4].split()[-1])
             self.num_dimensions = int(lines[5].split()[-1])
             self.num_stations = int(lines[6].split()[-1])
             self.num_customers = self.num_dimensions - self.num_stations
@@ -194,7 +193,7 @@ class Problem():
         
         tours = solution.get_tours()
 
-        if len(tours) > self.num_vehicles:
+        if len(tours) > self.max_num_vehicles:
             if verbose:
                 logger.warning("This solution using more than number of available vehicles.")
             return False
@@ -202,7 +201,6 @@ class Problem():
         visited = {}
 
         for tour in tours:
-            tour = [self.get_depot()] + tour + [self.get_depot()]
             energy_temp = self.get_battery_capacity()
             capacity_temp = self.get_capacity()
                 
@@ -265,7 +263,7 @@ class Problem():
         # Shuffle the list of customer IDs to randomize the solution
         shuffle(temp_solution)
 
-        splited_tour_indexes = np.random.choice(len(temp_solution), self.num_vehicles - 1, replace=False)
+        splited_tour_indexes = np.random.choice(len(temp_solution), self.max_num_vehicles - 1, replace=False)
         
         splited_tour_indexes = np.append(0, splited_tour_indexes)
 
@@ -273,7 +271,7 @@ class Problem():
 
         splited_tour_indexes = np.sort(splited_tour_indexes)
 
-        for i in range(self.num_vehicles):
+        for i in range(self.max_num_vehicles):
             tour_ids = temp_solution[splited_tour_indexes[i]:splited_tour_indexes[i + 1]]
             tour = [self.get_node_from_id(_id) for _id in tour_ids]
             solution.add_tour(tour)
