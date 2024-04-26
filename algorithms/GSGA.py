@@ -13,7 +13,7 @@ from algorithms.GreedySearch import GreedySearch
 import pandas as pd
 import matplotlib.pyplot as plt
 
-class HMAGS():
+class GSGA():
     """
     Here is a basic implementation of a GA class in Python for solving the VRP problem. 
     It takes a `Problem` object, population size, generations, crossover probability, mutation probability, and elite size as input arguments. 

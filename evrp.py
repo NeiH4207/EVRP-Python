@@ -2,7 +2,7 @@ import argparse
 import os
 
 import numpy as np
-from algorithms.HMAGS import HMAGS
+from algorithms.GSGA import GSGA
 from objects.problem import Problem
 from algorithms.GreedySearch import GreedySearch
 from src.utils import get_problem_name, logger
@@ -11,8 +11,8 @@ import random
 def argparser():
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', '--problem-path', type=str, default='./benchmarks/evrp-2019/E-n22-k4.evrp')
-    parser.add_argument('-a', '--algorithm', type=str, default='HMAGS')
-    parser.add_argument('-o', '--result-path', type=str, default='./results/HMAGS/')
+    parser.add_argument('-a', '--algorithm', type=str, default='GSGA')
+    parser.add_argument('-o', '--result-path', type=str, default='./results/GSGA/')
     parser.add_argument('-n', '--nruns', type=int, default=10)
     parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
@@ -37,8 +37,8 @@ if __name__ == "__main__":
             'verbose': True
         }
         
-    elif args.algorithm == 'HMAGS':
-        algorithm = HMAGS(population_size=100, generations=200, 
+    elif args.algorithm == 'GSGA':
+        algorithm = GSGA(population_size=100, generations=200, 
                           crossover_prob=0.85, mutation_prob=0.75, elite_rate=0.2)
         
         kwargs = {

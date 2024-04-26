@@ -1,13 +1,30 @@
 # Electric Vehicle Routing Problem #
 
-*** Paper link [here](https://link.springer.com/article/10.1007/s10489-022-03555-8) ***
+The Electric Vehicle Routing Problem (EVRP) is a twist on the classic Vehicle Routing Problem (VRP) that considers the limitations of electric vehicles (EVs) for logistics and delivery planning.
+
+Here's a breakdown of the key points:
+
+Traditional VRP: This aims to find the most efficient routes for a fleet of vehicles to deliver goods or services, considering factors like distance, capacity, and customer locations.
+
+EVRP Challenges:  Unlike traditional vehicles, EVs have limited driving range due to battery capacity and require recharging.  EVRP incorporates these challenges by:
+
+Accounting for battery range: Routes need to be planned within the EV's driving range or include stops for recharging.
+Factoring in charging stations: The location and availability of charging stations become important considerations when designing routes.
+Potential for multiple routes: An EV might need to complete a delivery in multiple legs with charging stops in between.
+EVRP Applications:  Delivery fleets, ride-sharing services, and public transportation with electric vehicles can all benefit from EVRP solutions to optimize their operations.  Optimizing routes reduces costs, improves efficiency, and minimizes environmental impact.
+
+EVRP is an active area of research with various solution approaches being developed.  Some focus on minimizing travel distance or the number of vehicles needed, while others consider factors like charging time and energy consumption.
+
+We applied the Greedy Search + Genetic Algorithm (GSGA) to solve the EVRP. The GSGA algorithm combines the Greedy Search heuristic with a Genetic Algorithm to find high-quality solutions efficiently.  The Greedy Search phase constructs initial solutions, which are then improved by the Genetic Algorithm through selection, crossover, and mutation operations.
+
+*** Paper link [here](https://link.springer.com/article/10.1007/s10489-022-03555-8): A greedy search based evolutionary algorithm for electric vehicle routing problem ***
 
 ### This repository contains algorithms to solve the EVRP (Electric Vehicle Routing Problem) in Python ###
 
 <a name="algorithms"></a>
 #### Algorithms: ####
 1. Greedy Search
-2. Greedy Search + Genetic Algorithm
+2. Greedy Search + Genetic Algorithm (GSGA)
 
 ### Installation ###
 ```bash
@@ -16,17 +33,17 @@ pip install -e .
 
 ### How to run the code ###
 ```bash
-python evrp.py -p ./benchmarks/evrp-2019/E-n22-k4.evrp -a HMAGS -o ./results/HMAGS/ -n 10 --seed 42
+python evrp.py -p ./benchmarks/evrp-2019/E-n22-k4.evrp -a GSGA -o ./results/GSGA/ -n 10 --seed 42
 ```
 
-*** Example of solution in graph E-n22-k4.evrp using HMAGS algorithm
+*** Example of solution in graph E-n22-k4.evrp using GSGA algorithm
 ![Solution](examples/E-n22-k4.png)
 ![convergence](examples/convergence-E-n22-k4.png)
 
 
 The algorithm in C++ version [here](https://github.com/NeiH4207/EVRP) archived top 3 in competition [CEC-12 (2019)](https://mavrovouniotis.github.io/EVRPcompetition2020/)
 
-|     instances    | VNS |           |           |        | SA |           |           |        | HMAGS |           |           |         |
+|     instances    | VNS |           |           |        | SA |           |           |        | GSGA |           |           |         |
 |:----------------:|:-----------:|:---------:|:---------:|:------:|:----------:|:---------:|:---------:|:------:|:-------------:|:---------:|:---------:|:-------:|
 |                  |     min     |    max    |    mean   |  stdev |     min    |    max    |    mean   |  stdev |      min      |    max    |    mean   |  stdev  |
 |   E-n22-k4  | 384.67      | 384.67    | 384.67    | 0.0    | 384.67     | 384.67    | 384.67    | 0.00   | 384.67        | 384.67    | 384.67    | 0.0     |
