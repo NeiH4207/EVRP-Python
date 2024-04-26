@@ -44,6 +44,9 @@ class Problem():
         self.depot_id = None
 
         self.problem = self.__read_problem(problem_path)
+        
+    def get_name(self):
+        return self.problem_name
             
     def get_problem_size(self):
         return len(self.nodes)
