@@ -6,10 +6,8 @@
 
 <a name="algorithms"></a>
 #### Algorithms: ####
-1. Greedy Search Solution (Only)
-2. Genetic Algorithm (GA) + GS
-3. Simulated Annealing (SA) + GS
-4. Simulated Ant Colony Optimization (SACO) + GS
+1. Greedy Search
+2. Greedy Search + Genetic Algorithm
 
 ### Installation ###
 ```bash
