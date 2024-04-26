@@ -6,8 +6,8 @@ from random import shuffle, randint, uniform, random, choice
 
 import numpy as np
 
-from EVRP.solution import Solution
-from EVRP.problem import Problem
+from EVRP.objects.solution import Solution
+from EVRP.objects.problem import Problem
 from EVRP.algorithms.GreedySearch import GreedySearch
 
 import pandas as pd
@@ -23,29 +23,29 @@ class HMAGS():
 
     """
     def __init__(self, population_size: int, generations: int, crossover_prob: float,
-                 mutation_prob: float, elite_size: int):
+                 mutation_prob: float, elite_rate: int):
         self.population_size = population_size
         self.generations = generations
         self.crossover_prob = crossover_prob
         self.mutation_prob = mutation_prob
-        self.elite_size = elite_size
+        self.elite_size = int(population_size * elite_rate)
         self.history = {
             'mean_fit': [],
-            'min_fit': []
+            'best_fit': []
         }
         self.ranks = []
         self.population = []
+        self.gs = GreedySearch()
     
     def set_problem(self, problem: Problem):
         self.problem = problem
-        self.gs = GreedySearch()
         self.gs.set_problem(problem)
         self.population = self._initial_population()
 
     def free(self):
         self.history = {
             'mean_fit': [],
-            'min_fit': []
+            'best_fit': []
         }
         self.ranks = []
         self.population = self._initial_population()
@@ -58,7 +58,10 @@ class HMAGS():
             new_pop.append(indv)
         return new_pop
 
-    def run(self, verbose=False) -> Solution:
+    def solve(self, problem: Problem, verbose=False, plot_path=None) -> Solution:
+        
+        self.set_problem(problem)
+        
         for i in range(self.generations):
             new_population = []
             self.compute_rank(self.population)
@@ -75,15 +78,20 @@ class HMAGS():
                 new_population.append(child)
             
             elites = self._get_elite(self.population)
-            self.population = elites + self.selection(new_population, self.population_size)
+            self.population = elites + self.selection(new_population, self.population_size - self.elite_size)
             valids = [self.problem.check_valid_solution(indv) for indv in self.population]
             mean_fit = np.mean([indv.get_tour_length() for i, indv in enumerate(self.population) if valids[i]]) 
-            min_fit = np.min([indv.get_tour_length() for i, indv in enumerate(self.population) if valids[i]])
+            best_fit = np.min([indv.get_tour_length() for i, indv in enumerate(self.population) if valids[i]])
+            
             if verbose:
-                print(f"Generation: {i}, mean fit: {mean_fit}, min fit: {min_fit}")
+                print(f"Generation: {i}, mean fit: {mean_fit}, min fit: {best_fit}")
+                
             self.history['mean_fit'].append(mean_fit)
-            self.history['min_fit'].append(min_fit)
-            self.plot_history('./EVRP/figures/history.png')
+            self.history['best_fit'].append(best_fit)
+            
+            if plot_path is not None:
+                self.plot_history(plot_path)
+                
         return self.population[np.argmin([indv.get_tour_length() for indv in self.population])]
     
     def plot_history(self, path):
@@ -93,7 +101,7 @@ class HMAGS():
         plt.close()
 
     def _initial_population(self) -> List[Solution]:
-        return [self.gs.optimize(self.gs.create_solution()) for _ in range(self.population_size)]
+        return [self.gs.optimize(self.gs.init_solution()) for _ in range(self.population_size)]
 
     def _get_elite(self, population: List[Solution]) -> List[Solution]:
         return sorted(population, key=lambda s: s.get_tour_length())[:self.elite_size]
@@ -245,7 +253,6 @@ class HMAGS():
         rd_customer_idx_1 = choice(range(len(tours[rd_tour_idx])))
         rd_customer_idx_2 = choice(range(len(tours[rd_tour_idx])))
 
-        
         tours[rd_tour_idx][rd_customer_idx_1], tours[rd_tour_idx][rd_customer_idx_2] = \
             tours[rd_tour_idx][rd_customer_idx_2], tours[rd_tour_idx][rd_customer_idx_1]
         
@@ -266,5 +273,5 @@ class HMAGS():
                 self.ranks[i] += self.ranks[i - 1]
 
     def choose_by_rank(self, population: List[Solution]) -> int:
-        prob = random()
+        prob = random() / 2
         return population[bisect_right(self.ranks, prob, hi=len(population)) - 1]
