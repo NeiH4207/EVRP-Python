@@ -19,7 +19,7 @@ pip install -e .
 python evrp.py -p ./benchmarks/evrp-2019/E-n22-k4.evrp -a HMAGS -o ./results/HMAGS/ -n 10 --seed 42
 ```
 
-*** Example of solution in graph E-n23-k3.evrp using HMAGS algorithm
+*** Example of solution in graph E-n22-k4.evrp using HMAGS algorithm
 ![Solution](examples/E-n22-k4.png)
 
 
