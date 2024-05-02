@@ -17,7 +17,7 @@ EVRP is an active area of research with various solution approaches being develo
 
 We applied the Greedy Search + Genetic Algorithm (GSGA) to solve the EVRP. The GSGA algorithm combines the Greedy Search heuristic with a Genetic Algorithm to find high-quality solutions efficiently.  The Greedy Search phase constructs initial solutions, which are then improved by the Genetic Algorithm through selection, crossover, and mutation operations.
 
-*** Paper link [here](https://link.springer.com/article/10.1007/s10489-022-03555-8): A greedy search based evolutionary algorithm for electric vehicle routing problem ***
+`[Paper link](https://link.springer.com/article/10.1007/s10489-022-03555-8): A greedy search based evolutionary algorithm for electric vehicle routing problem `
 
 ### This repository contains algorithms to solve the EVRP (Electric Vehicle Routing Problem) in Python ###
 
