@@ -10,15 +10,15 @@ def get_requirements(path: str):
     return [l.strip() for l in open(path)]
 
 setup (
-    name = 'VRP Project',
+    name = 'EVRP Project',
     version = '0.1',
-    description = 'VRP stands for Vehicle Routing Problem, which is a well-known optimization problem in the field of operations research and logistics. ',
+    description = 'Electric Vehicle Routing Problem',
     long_description = long_description,
     long_description_content_type="text/markdown", 
     author = 'Vu Quoc Hien',
-    author_email = 'hienvq.2000@gmail.com',
-    url = 'https://github.com/NeiH4207/VRP-Project',
-    packages=['EVRP', 'examples'],
+    author_email = 'hienvq23@gmail.com',
+    url = 'https://github.com/NeiH4207/EVRP-Python',
+    packages=find_packages(),
     keywords='',
     install_requires=get_requirements("requirements.txt"),
     python_requires='>=3.10',
