@@ -1,6 +1,7 @@
 
 from copy import deepcopy
 from random import shuffle
+import time
 
 from loguru import logger
 import numpy as np
@@ -18,14 +19,19 @@ class GreedySearch():
 
     def set_problem(self, problem: Problem):
         self.problem = problem
-        self.nearest_matrix_distance = {}
-        self.calculate_nearest_matrix_distance()
+        self.nearest_dist_customer_matrix = {}
+        self.calc_nearest_dist_customer_matrix()
 
     def free(self):
         pass
     
+    def init_solution(self) -> Solution:
+        solution = self.create_clustering_solution()
+        solution = self.balancing_capacity(solution)
+        return solution
+    
     def optimize(self, solution: Solution) -> Solution:
-        solution = self.local_search(solution)
+        # solution = self.local_search(solution)
         solution = self.insert_depots(solution)
         solution = self.insert_charging_stations(solution)
         solution = self.greedy_optimize_stations(solution)
@@ -39,35 +45,44 @@ class GreedySearch():
         solution = self.optimize(solution)
         return solution
     
-    def calculate_nearest_matrix_distance(self):
+    def calc_nearest_dist_customer_matrix(self):
         all_customers = self.problem.get_all_customers()
-        self.nearest_matrix_distance = {}
+        self.nearest_dist_customer_matrix = {}
+        
         for i in range(len(all_customers)):
-            distances_ = []
+            distances = []
             for j in range(len(all_customers)):
-                distance = all_customers[i].distance(all_customers[j])
-                distances_.append(distance)
-            argsort_dist = np.argsort(distances_)[1:]
-            self.nearest_matrix_distance[all_customers[i].get_id()] = \
+                distances.append(all_customers[i].distance(all_customers[j]))
+            argsort_dist = np.argsort(distances)
+            self.nearest_dist_customer_matrix[all_customers[i].get_id()] = \
                 [all_customers[j].get_id() for j in argsort_dist if i != j]
-    
-    def init_solution(self) -> Solution:
-        solution = self.create_clustering_solution()
-        solution = self.balancing_capacity(solution)
-        return solution
-
+                
+        all_charging_stations = self.problem.get_all_stations()
+        self.nearest_dist_charging_matrix = {}
+        
+        all_nodes = all_customers + all_charging_stations + [self.problem.get_depot()]
+        for i in range(len(all_nodes)):
+            distances = []
+            for j in range(len(all_charging_stations)):
+                distances.append(all_nodes[i].distance(all_charging_stations[j]))
+            argsort_dist = np.argsort(distances)
+            self.nearest_dist_charging_matrix[all_nodes[i].get_id()] = \
+                [all_charging_stations[j].get_id() for j in argsort_dist]
+                
+            
+                
     def create_clustering_solution(self) -> Solution:
         solution = Solution()
         node_list = self.problem.get_customer_ids()
         capacity_max = self.problem.get_capacity()
         
         shuffle(node_list)
-        temp_set = set(node_list)
+        skipping_nodes = np.zeros(self.problem.get_num_dimensions())
         idx = 0
         n_tours = 0
 
         while idx < len(node_list):
-            if node_list[idx] not in temp_set:
+            if skipping_nodes[node_list[idx]] == 1:
                 idx += 1
                 continue
             
@@ -75,21 +90,21 @@ class GreedySearch():
             
             n_tours += 1
             if n_tours == self.problem.get_max_num_vehicles():
-                tour = list(temp_set)
-                solution.add_tour([self.problem.get_node_from_id(tour[i]) for i in range(len(tour))])
+                remaining_nodes = [self.problem.get_node_from_id(node_id) for node_id in node_list if skipping_nodes[node_id] == 0]
+                solution.add_tour(remaining_nodes)
                 break
             
-            temp_set.remove(center_node)
+            skipping_nodes[center_node] = 1
             tour = [center_node]
             capacity = self.problem.get_node_from_id(center_node).get_demand()
             
-            for candidate_node_id in self.nearest_matrix_distance[center_node]:
-                if candidate_node_id in temp_set:
+            for candidate_node_id in self.nearest_dist_customer_matrix[center_node]:
+                if skipping_nodes[candidate_node_id] == 0:
                     demand = self.problem.get_node_from_id(candidate_node_id).get_demand()
                     if capacity + demand > capacity_max:
                         break
                     tour.append(candidate_node_id)
-                    temp_set.remove(candidate_node_id)
+                    skipping_nodes[candidate_node_id] = 1
                     capacity += demand
 
             solution.add_tour([self.problem.get_node_from_id(tour[i]) for i in range(len(tour))])
@@ -119,7 +134,7 @@ class GreedySearch():
         rd_idx = np.random.randint(0, len(last_tour))
         moving_node_id = last_tour[rd_idx].get_id()
         
-        for candidate_node_id in self.nearest_matrix_distance[moving_node_id]:
+        for candidate_node_id in self.nearest_dist_customer_matrix[moving_node_id]:
             if candidate_node_id in is_customer_in_last_tour:
                 continue
             
@@ -328,9 +343,9 @@ class GreedySearch():
                     complete_tour.pop()
                 if i == 0:
                     return tour[1:-1]
-                if from_node.id in skip_node:
+                if from_node.get_id() in skip_node:
                     return tour[1:-1]
-                skip_node[from_node.id] = True
+                skip_node[from_node.get_id()] = True
                 to_node = tour[i + 1]
                 best_station = self.nearest_station(from_node, to_node, remaining_energy[from_node.get_id()])
                 if best_station == -1:
@@ -468,16 +483,12 @@ class GreedySearch():
         return list(reversed(optimal_tour))
     
     def nearest_station(self, from_node, to_node, energy):
-        min_length = float("inf")
         best_station = -1
 
-        for v in self.problem.get_all_stations():
-            if v.is_charging_station():
-                length = v.distance(to_node)
-                if self.problem.get_energy_consumption(from_node, v) <= energy:
-                    if min_length > length:
-                        min_length = length
-                        best_station = v
+        for s in self.nearest_dist_charging_matrix[to_node.get_id()]:
+            s_node = self.problem.get_node_from_id(s)
+            if self.problem.get_energy_consumption(from_node, s_node) <= energy:
+                return s_node
 
         return best_station
     
@@ -485,15 +496,18 @@ class GreedySearch():
         min_length = float("inf")
         best_station = -1
 
-        for v in self.problem.get_all_stations() + [self.problem.get_depot()]:
-            if v.is_charging_station():
-                if self.problem.get_energy_consumption(from_node, v) <= energy and \
-                    self.problem.get_energy_consumption(v, to_node) + required_energy < \
-                        self.problem.get_battery_capacity():
-                    length1 = v.distance(from_node)
-                    length2 = v.distance(to_node)
-                    if min_length > length1 + length2:
-                        min_length = length1 + length2
-                        best_station = v
+        for s in self.nearest_dist_charging_matrix[from_node.get_id()] + [self.problem.get_depot_id()]:
+            s_node = self.problem.get_node_from_id(s)
+            if self.problem.get_energy_consumption(from_node, s_node) <= energy and \
+                self.problem.get_energy_consumption(s_node, to_node) + required_energy < \
+                    self.problem.get_battery_capacity():
+                length1 = s_node.distance(from_node)
+                length2 = s_node.distance(to_node)
+                if min_length > length1 + length2:
+                    min_length = length1 + length2
+                    best_station = s_node
+                
+                if length1 > min_length:
+                    break
 
         return best_station

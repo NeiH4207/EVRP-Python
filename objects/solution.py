@@ -1,4 +1,5 @@
 from copy import deepcopy
+from hashlib import md5
 import numpy as np
 from src.utils import logger
 
@@ -22,6 +23,9 @@ class Solution():
         
     def add_tour(self, tour):
         self.tours.append(tour)
+        
+    def get_num_tours(self):
+        return len(self.tours)
 
     def set_tour_index(self):
         self.tour_index = {}
@@ -37,6 +41,22 @@ class Solution():
     
     def get_tour_index_by_node(self, node_id):
         return self.tour_index[node_id]
+    
+    def get_presentation(self):
+        list_node = [[x.get_id() for x in tour] for tour in self.tours]
+        return md5(str(list_node).encode()).hexdigest()
+    
+    def __ge__(self, other):
+        return self.tour_length >= other.tour_length
+    
+    def __gt__(self, other):
+        return self.tour_length > other.tour_length
+    
+    def __le__(self, other):
+        return self.tour_length <= other.tour_length
+    
+    def __lt__(self, other):
+        return self.tour_length < other.tour_length
     
     def __repr__(self) -> str:
         if self.tour_length:

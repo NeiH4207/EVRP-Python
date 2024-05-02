@@ -9,7 +9,16 @@ class Node():
         self.demand = 0
     
     def __str__(self):
-        return str(self.id)    
+        return str(self.id)
+    
+    def get_x(self):
+        return self.x
+    
+    def get_y(self):
+        return self.y
+    
+    def get_xy(self):
+        return (self.x, self.y)
     
     def get_type(self):
         return self.type

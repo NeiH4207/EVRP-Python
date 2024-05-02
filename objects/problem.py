@@ -283,6 +283,12 @@ class Problem():
 
         return solution
     
+    def get_tour_length(self, tour):
+        tour_length = 0
+        for i in range(len(tour) - 1):
+            tour_length += tour[i].distance(tour[i + 1])
+        return tour_length
+    
     def calculate_tour_length(self, solution: Solution):
         tour_length = 0
         for tour in solution.get_tours():
