@@ -38,6 +38,7 @@ python evrp.py -p ./benchmarks/evrp-2019/E-n22-k4.evrp -a GSGA -o ./results/GSGA
 
 *** Example of solution in graph E-n22-k4.evrp using GSGA algorithm
 ![Solution](examples/E-n22-k4.png)
+
 *** Example of solution in graph E-n51-k5.evrp using GSGA algorithm
 ![Solution](examples/E-n51-k5.png)
 
