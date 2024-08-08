@@ -31,7 +31,7 @@ class GreedySearch():
         return solution
     
     def optimize(self, solution: Solution) -> Solution:
-        # solution = self.local_search(solution)
+        solution = self.local_search(solution)
         solution = self.insert_depots(solution)
         solution = self.insert_charging_stations(solution)
         solution = self.greedy_optimize_stations(solution)
